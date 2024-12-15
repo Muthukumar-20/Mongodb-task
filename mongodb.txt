@@ -1,0 +1,142 @@
+1. Find all the topics and tasks taught in the month of October
+
+ Topics in October
+db.topics.find({
+  date: {
+    $gte: ISODate("2020-10-01T00:00:00Z"),
+    $lte: ISODate("2020-10-31T23:59:59Z")
+  }
+});
+
+ Tasks in October
+db.tasks.find({
+  date: {
+    $gte: ISODate("2020-10-01T00:00:00Z"),
+    $lte: ISODate("2020-10-31T23:59:59Z")
+  }
+});
+
+
+2. Find all the company drives which appeared between 15-Oct-2020 and 31-Oct-2020
+
+db.company_drives.find({
+  date: {
+    $gte: ISODate("2020-10-15T00:00:00Z"),
+    $lte: ISODate("2020-10-31T23:59:59Z")
+  }
+});
+
+
+
+Here is the MongoDB query implementation for each of your requirements:
+
+Assumptions:
+Database and Collection Names: Adjust the collection names based on your schema.
+Date Format: Assumes dates are stored in ISODate format (e.g., "2020-10-15T00:00:00Z").
+Schema Overview:
+topics: Contains information about topics, including a date field.
+tasks: Contains tasks, including a date field.
+company_drives: Contains company drives, including a date field.
+codekata: Contains user problem-solving information.
+mentors: Contains mentor data, including mentees_count.
+attendance: Contains user attendance information.
+users: Contains user details, potentially linking to tasks and attendance.
+1. Find all the topics and tasks taught in the month of October
+javascript
+Copy code
+// Topics in October
+db.topics.find({
+  date: {
+    $gte: ISODate("2020-10-01T00:00:00Z"),
+    $lte: ISODate("2020-10-31T23:59:59Z")
+  }
+});
+
+// Tasks in October
+db.tasks.find({
+  date: {
+    $gte: ISODate("2020-10-01T00:00:00Z"),
+    $lte: ISODate("2020-10-31T23:59:59Z")
+  }
+});
+2. Find all the company drives which appeared between 15-Oct-2020 and 31-Oct-2020
+javascript
+Copy code
+db.company_drives.find({
+  date: {
+    $gte: ISODate("2020-10-15T00:00:00Z"),
+    $lte: ISODate("2020-10-31T23:59:59Z")
+  }
+});
+3. Find all the company drives and students who appeared for the placement
+
+db.company_drives.aggregate([
+  {
+    $lookup: {
+      from: "users",           // Collection for users
+      localField: "drive_id",  // Field in company_drives
+      foreignField: "drive_id",// Field in users
+      as: "students"
+    }
+  },
+  {
+    $project: {
+      company_name: 1,
+      date: 1,
+      students: "$students.name" // Include only student names
+    }
+  }
+]);
+
+
+4. Find the number of problems solved by the user in codekata
+
+db.codekata.aggregate([
+  {
+    $group: {
+      _id: "$user_id", // Group by user ID
+      totalProblemsSolved: { $sum: "$problems_solved" }
+    }
+  }
+]);
+
+
+
+5. Find all the mentors with mentees count greater than 15
+
+db.mentors.find({
+  mentees_count: { $gt: 15 }
+});
+
+6. Find the number of users who are absent and task not submitted between 15-Oct-2020 and 31-Oct-2020
+
+db.attendance.aggregate([
+  {
+    $match: {
+      date: {
+        $gte: ISODate("2020-10-15T00:00:00Z"),
+        $lte: ISODate("2020-10-31T23:59:59Z")
+      },
+      status: "absent" // Assuming "absent" marks attendance
+    }
+  },
+  {
+    $lookup: {
+      from: "tasks",           // Collection for tasks
+      localField: "user_id",   // Field in attendance
+      foreignField: "user_id", // Field in tasks
+      as: "tasks"
+    }
+  },
+  {
+    $match: {
+      "tasks.submitted": false // Assuming `submitted` indicates task status
+    }
+  },
+  {
+    $count: "absentAndNotSubmitted"
+  }
+]);
+
+
+
